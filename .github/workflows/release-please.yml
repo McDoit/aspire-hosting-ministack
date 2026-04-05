@@ -16,6 +16,7 @@ jobs:
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Run Release Please
@@ -43,9 +44,7 @@ jobs:
         run: dotnet restore
 
       - name: Pack (Release)
-        run: |
-          TAG="${{ needs.release-please.outputs.tag_name }}"
-          dotnet pack --configuration Release --no-restore -p:PackageVersion="${TAG#v}"
+        run: dotnet pack --configuration Release --no-restore -p:PackageVersion=${{ needs.release-please.outputs.version }}
 
       - name: Push package(s) to NuGet.org
         env:

@@ -44,12 +44,6 @@ builder.AddMinistack(
         options.Tag = "2.3.4";
         options.Port = 14566;
         options.Lifetime = ContainerLifetime.Persistent;
-
-        // Use an external Redis instance for state persistence across container restarts
-        options.RedisHost = "redis-host";
-
-        // Override the AWS account ID (defaults to 000000000000 inside the container)
-        options.AccountId = "123456789012";
     });
 ```
 
@@ -62,8 +56,6 @@ builder.AddMinistack(
 | `Tag` | — | `latest` | Image tag |
 | `Port` | — | *(proxied)* | Host port; when set, proxying is disabled |
 | `Lifetime` | `PERSIST_STATE`, `S3_PERSIST` | `Session` | `Persistent` enables file-based state persistence |
-| `RedisHost` | `REDIS_HOST` | *(not set)* | Redis host for state persistence via Redis |
-| `AccountId` | `MINISTACK_ACCOUNT_ID` | `000000000000` | Custom AWS account ID |
 
 ## Dev-only resource
 

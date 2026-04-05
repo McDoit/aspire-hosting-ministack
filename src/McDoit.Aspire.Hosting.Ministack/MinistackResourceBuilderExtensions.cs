@@ -57,16 +57,6 @@ public static class MinistackResourceBuilderExtensions
 			ministackBuilder.WithEnvironment("S3_PERSIST", "1");
 		}
 
-		if (options.RedisHost != null)
-		{
-			ministackBuilder.WithEnvironment("REDIS_HOST", options.RedisHost);
-		}
-
-		if (options.AccountId != null)
-		{
-			ministackBuilder.WithEnvironment("MINISTACK_ACCOUNT_ID", options.AccountId);
-		}
-
 		var prefix = $"{builder.Environment.ApplicationName}-{name}";
 
 		var profileInitDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

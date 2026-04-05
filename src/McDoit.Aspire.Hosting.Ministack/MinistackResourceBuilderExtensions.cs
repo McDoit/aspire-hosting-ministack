@@ -48,7 +48,8 @@ public static class MinistackResourceBuilderExtensions
 						  targetPort: 4566,
 						  name: MinistackResource.HttpEndpointName,
 						  isProxied: !options.Port.HasValue)
-					  .WithHttpHealthCheck(path: "/_ministack/health");
+					  .WithHttpHealthCheck(path: "/_ministack/health")
+					  .ExcludeFromManifest();
 
 		if(options.Lifetime == ContainerLifetime.Persistent)
 		{

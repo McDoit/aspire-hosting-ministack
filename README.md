@@ -49,6 +49,22 @@ builder.AddMinistack(
     });
 ```
 
+## Container options reference
+
+| Option | Environment variable | Default | Description |
+|--------|---------------------|---------|-------------|
+| `Registry` | — | `docker.io` | Container registry |
+| `Image` | — | `nahuelnucera/ministack` | Container image |
+| `Tag` | — | `latest` | Image tag |
+| `Port` | — | *(proxied)* | Host port; when set, proxying is disabled |
+| `Lifetime` | `PERSIST_STATE`, `S3_PERSIST` | `Session` | `Persistent` enables file-based state persistence |
+
+## Dev-only resource
+
+The Ministack resource is automatically excluded from the Aspire publish manifest
+(`ExcludeFromManifest`). It is intended for local development only and will not be
+included when publishing or deploying the AppHost.
+
 ## Aspire usage
 
 The way it works is by setting an application specific profile populated by Ministack endpoint as service endpoint  

@@ -1,5 +1,7 @@
 # McDoit.Aspire.Hosting.Ministack
 
+[![NuGet](https://img.shields.io/nuget/v/McDoit.Aspire.Hosting.Ministack)](https://www.nuget.org/packages/McDoit.Aspire.Hosting.Ministack)
+
 `McDoit.Aspire.Hosting.Ministack` adds an Aspire resource for running [Ministack](https://ministack.org/) (Local AWS emulator) in an AppHost.
 
 ## What this package provides

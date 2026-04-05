@@ -48,12 +48,23 @@ public static class MinistackResourceBuilderExtensions
 						  targetPort: 4566,
 						  name: MinistackResource.HttpEndpointName,
 						  isProxied: !options.Port.HasValue)
-					  .WithHttpHealthCheck(path: "/_ministack/health");
+					  .WithHttpHealthCheck(path: "/_ministack/health")
+					  .ExcludeFromManifest();
 
 		if(options.Lifetime == ContainerLifetime.Persistent)
 		{
 			ministackBuilder.WithEnvironment("PERSIST_STATE", "1");
 			ministackBuilder.WithEnvironment("S3_PERSIST", "1");
+		}
+
+		if (options.RedisHost != null)
+		{
+			ministackBuilder.WithEnvironment("REDIS_HOST", options.RedisHost);
+		}
+
+		if (options.AccountId != null)
+		{
+			ministackBuilder.WithEnvironment("MINISTACK_ACCOUNT_ID", options.AccountId);
 		}
 
 		var prefix = $"{builder.Environment.ApplicationName}-{name}";

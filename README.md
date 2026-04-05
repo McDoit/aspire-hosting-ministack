@@ -44,8 +44,32 @@ builder.AddMinistack(
         options.Tag = "2.3.4";
         options.Port = 14566;
         options.Lifetime = ContainerLifetime.Persistent;
+
+        // Use an external Redis instance for state persistence across container restarts
+        options.RedisHost = "redis-host";
+
+        // Override the AWS account ID (defaults to 000000000000 inside the container)
+        options.AccountId = "123456789012";
     });
 ```
+
+## Container options reference
+
+| Option | Environment variable | Default | Description |
+|--------|---------------------|---------|-------------|
+| `Registry` | — | `docker.io` | Container registry |
+| `Image` | — | `nahuelnucera/ministack` | Container image |
+| `Tag` | — | `latest` | Image tag |
+| `Port` | — | *(proxied)* | Host port; when set, proxying is disabled |
+| `Lifetime` | `PERSIST_STATE`, `S3_PERSIST` | `Session` | `Persistent` enables file-based state persistence |
+| `RedisHost` | `REDIS_HOST` | *(not set)* | Redis host for state persistence via Redis |
+| `AccountId` | `MINISTACK_ACCOUNT_ID` | `000000000000` | Custom AWS account ID |
+
+## Dev-only resource
+
+The Ministack resource is automatically excluded from the Aspire publish manifest
+(`ExcludeFromManifest`). It is intended for local development only and will not be
+included when publishing or deploying the AppHost.
 
 ## Aspire usage
 

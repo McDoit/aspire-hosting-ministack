@@ -13,6 +13,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'" Include="Aspire.Hosting.Orchestration.linux-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'" Include="Aspire.Hosting.Orchestration.linux-arm64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Windows'))" Include="Aspire.Hosting.Orchestration.win-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'" Include="Aspire.Hosting.Orchestration.osx-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'" Include="Aspire.Hosting.Orchestration.osx-arm64" Version="13.1.2" />
+
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'" Include="Aspire.Dashboard.SDK.linux-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'" Include="Aspire.Dashboard.SDK.linux-arm64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('Windows'))" Include="Aspire.Dashboard.SDK.win-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'" Include="Aspire.Dashboard.SDK.osx-x64" Version="13.1.2" />
+    <PackageReference Condition="$([MSBuild]::IsOsPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'" Include="Aspire.Dashboard.SDK.osx-arm64" Version="13.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\McDoit.Aspire.Hosting.Ministack\McDoit.Aspire.Hosting.Ministack.csproj" />
   </ItemGroup>
 

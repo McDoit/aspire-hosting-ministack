@@ -193,6 +193,9 @@ public static class MinistackResourceBuilderExtensions
 				RedirectStandardError = true,
 			};
 			process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
+			process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
+			process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+			process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = resource.Region.SystemName;
 
 			process.Start();
 

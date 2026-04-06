@@ -6,7 +6,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 var awsConfig = builder.AddAWSSDKConfig()
     .WithRegion(RegionEndpoint.USEast1);
 
-var ministack = builder.AddMinistack(awsConfig);
+var ministack = builder.AddMinistack(awsConfig)
+    .WithStackport();
 
 var awsResources = builder.AddAWSCloudFormationTemplate(
         "sample-dev-resources",
@@ -26,3 +27,4 @@ builder.AddContainer("resource-inspector", "alpine")
     .WithEnvironment("SAMPLE_TABLE_NAME", awsResources.GetOutput("SampleTableName"));
 
 builder.Build().Run();
+

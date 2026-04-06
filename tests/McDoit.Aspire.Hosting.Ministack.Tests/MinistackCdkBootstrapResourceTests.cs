@@ -66,10 +66,14 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        // Guard against the app or CDK bootstrap hanging indefinitely.
+        var startupTimeout = TimeSpan.FromMinutes(GetBootstrapTimeout().TotalMinutes + 5);
+        using var startupCts = new CancellationTokenSource(startupTimeout);
+
         var builder = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
         _app = await builder.BuildAsync();
-        await _app.StartAsync();
+        await _app.StartAsync(startupCts.Token);
 
         var connectionString = await _app.GetConnectionStringAsync("ministack")
             ?? throw new System.InvalidOperationException("Could not retrieve the Ministack connection string.");
@@ -97,7 +101,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             ServiceURL = connectionString,
         });
 
-        await WaitForCdkBootstrapAsync();
+        await WaitForCdkBootstrapAsync(startupCts.Token);
     }
 
     private static TimeSpan GetBootstrapTimeout()
@@ -109,8 +113,17 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             return TimeSpan.FromMinutes(minutes);
         }
 
-        return TimeSpan.FromMinutes(3);
+        return TimeSpan.FromMinutes(5);
     }
+
+    private static readonly StackStatus[] _failureStatuses =
+    [
+        StackStatus.CREATE_FAILED,
+        StackStatus.ROLLBACK_COMPLETE,
+        StackStatus.ROLLBACK_FAILED,
+        StackStatus.DELETE_COMPLETE,
+        StackStatus.DELETE_FAILED,
+    ];
 
     private async Task WaitForCdkBootstrapAsync(CancellationToken cancellationToken = default)
     {
@@ -125,8 +138,16 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
                 var response = await CloudFormationClient.DescribeStacksAsync(
                     new DescribeStacksRequest { StackName = "CDKToolkit" }, cancellationToken);
 
-                if (response.Stacks.Any(s => s.StackStatus == StackStatus.CREATE_COMPLETE))
-                    return;
+                var stack = response.Stacks.FirstOrDefault();
+                if (stack is not null)
+                {
+                    if (stack.StackStatus == StackStatus.CREATE_COMPLETE)
+                        return;
+
+                    if (_failureStatuses.Contains(stack.StackStatus))
+                        throw new System.InvalidOperationException(
+                            $"CDK bootstrap failed. The CDKToolkit CloudFormation stack reached a terminal failure state: {stack.StackStatus}.");
+                }
             }
             catch (AmazonCloudFormationException)
             {

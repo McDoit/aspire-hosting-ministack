@@ -8,24 +8,16 @@ namespace McDoit.Aspire.Hosting.Ministack.Tests;
 public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture) : IClassFixture<CdkAspireTestingFixture>
 {
     [Fact]
-    public async Task CdkSampleAppHost_CreatesMinistackResource()
+    public void CdkSampleAppHost_CreatesMinistackResource()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         Assert.Equal("ministack", resource.Name);
     }
 
     [Fact]
-    public async Task CdkSampleAppHost_UsesExpectedContainerImage()
+    public void CdkSampleAppHost_UsesExpectedContainerImage()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
 
         var imageAnnotation = Assert.Single(resource.Annotations.OfType<ContainerImageAnnotation>());
         Assert.Equal(MinistackContainerImageTags.Registry, imageAnnotation.Registry);
@@ -34,31 +26,37 @@ public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture)
     }
 
     [Fact]
-    public async Task CdkSampleAppHost_HasCdkBootstrapConfigured()
+    public void CdkSampleAppHost_HasCdkBootstrapConfigured()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         Assert.True(resource.Annotations.OfType<CdkBootstrapAnnotation>().Any());
     }
 
     [Fact]
-    public async Task CdkSampleAppHost_CdkBootstrapAnnotation_HasExpectedQualifier()
+    public void CdkSampleAppHost_CdkBootstrapAnnotation_HasExpectedQualifier()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         var annotation = Assert.Single(resource.Annotations.OfType<CdkBootstrapAnnotation>());
         Assert.Equal("myapp", annotation.Qualifier);
     }
 }
 
-public class CdkAspireTestingFixture
+public class CdkAspireTestingFixture : IAsyncLifetime
 {
-    public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync()
-        => DistributedApplicationTestingBuilder.CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
+    private DistributedApplication? _app;
+
+    public IDistributedApplicationTestingBuilder Builder { get; private set; } = null!;
+
+    public async Task InitializeAsync()
+    {
+        Builder = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
+        _app = await Builder.BuildAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_app is not null)
+            await _app.DisposeAsync();
+    }
 }

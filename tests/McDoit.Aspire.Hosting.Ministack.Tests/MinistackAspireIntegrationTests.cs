@@ -8,24 +8,16 @@ namespace McDoit.Aspire.Hosting.Ministack.Tests;
 public class MinistackAspireIntegrationTests(AspireTestingFixture fixture) : IClassFixture<AspireTestingFixture>
 {
     [Fact]
-    public async Task SampleAppHost_CreatesMinistackResource()
+    public void SampleAppHost_CreatesMinistackResource()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         Assert.Equal("ministack", resource.Name);
 	}
 
     [Fact]
-    public async Task SampleAppHost_UsesConfigureContainerValuesForMinistack()
+    public void SampleAppHost_UsesConfigureContainerValuesForMinistack()
     {
-        var builder = await fixture.CreateBuilderAsync();
-
-        await using var app = await builder.BuildAsync();
-
-        var resource = Assert.Single(builder.Resources.OfType<MinistackResource>());
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
 
         var imageAnnotation = Assert.Single(resource.Annotations.OfType<ContainerImageAnnotation>());
         Assert.Equal(MinistackContainerImageTags.Registry, imageAnnotation.Registry);
@@ -37,8 +29,22 @@ public class MinistackAspireIntegrationTests(AspireTestingFixture fixture) : ICl
     }
 }
 
-public class AspireTestingFixture
+public class AspireTestingFixture : IAsyncLifetime
 {
-    public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync()
-        => DistributedApplicationTestingBuilder.CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_CloudFormation_AppHost>();
+    private DistributedApplication? _app;
+
+    public IDistributedApplicationTestingBuilder Builder { get; private set; } = null!;
+
+    public async Task InitializeAsync()
+    {
+        Builder = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_CloudFormation_AppHost>();
+        _app = await Builder.BuildAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_app is not null)
+            await _app.DisposeAsync();
+    }
 }

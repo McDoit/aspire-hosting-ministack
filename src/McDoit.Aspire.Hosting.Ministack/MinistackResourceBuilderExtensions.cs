@@ -15,6 +15,42 @@ namespace McDoit.Aspire.Hosting.Ministack;
 public static class MinistackResourceBuilderExtensions
 {
 	/// <summary>
+	/// Adds the <see href="https://hub.docker.com/r/davireis/stackport">Stackport</see> web UI
+	/// container to the given <paramref name="builder"/> instance, connected to the Ministack resource.
+	/// Stackport is a universal AWS resource browser for local emulators.
+	/// </summary>
+	/// <param name="builder">The <see cref="IResourceBuilder{MinistackResource}"/>.</param>
+	/// <param name="name">The name of the Stackport resource. Defaults to <c>"stackport"</c>.</param>
+	/// <param name="port">An optional host port to expose the Stackport web UI on.</param>
+	/// <returns>
+	/// The original <see cref="IResourceBuilder{MinistackResource}"/> instance to allow chaining.
+	/// </returns>
+	public static IResourceBuilder<MinistackResource> WithStackport(
+		this IResourceBuilder<MinistackResource> builder,
+		[ResourceName] string name = "stackport",
+		int? port = null)
+	{
+		builder.ApplicationBuilder
+			.AddResource(new ContainerResource(name))
+			.WithImage(StackportContainerImageTags.Image)
+			.WithImageRegistry(StackportContainerImageTags.Registry)
+			.WithImageTag(StackportContainerImageTags.Tag)
+			.WithEnvironment(ctx =>
+			{
+				ctx.EnvironmentVariables["AWS_ENDPOINT_URL"] = builder.Resource.ConnectionStringExpression;
+				ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region.SystemName;
+				ctx.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
+				ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+			})
+			.WithHttpEndpoint(port: port, targetPort: 8080, name: "http", isProxied: !port.HasValue)
+			.WithHttpHealthCheck(path: "/api/health")
+			.WaitFor(builder)
+			.ExcludeFromManifest();
+
+		return builder;
+	}
+
+	/// <summary>
 	/// Adds the <see cref="MinistackResource"/> to the given
 	/// <paramref name="builder"/> instance.
 	/// </summary>
@@ -32,7 +68,7 @@ public static class MinistackResourceBuilderExtensions
 		[ResourceName] string name = "ministack",
 		Action<MinistackContainerOptions>? configureContainer = null)
 	{
-		var resource = new MinistackResource(name);
+		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1);
 
 		var options = new MinistackContainerOptions();
 		
@@ -42,7 +78,7 @@ public static class MinistackResourceBuilderExtensions
 					  .WithImage(options.Image ?? MinistackContainerImageTags.Image)
 					  .WithImageRegistry(options.Registry ?? MinistackContainerImageTags.Registry)
 					  .WithImageTag(options.Tag ?? MinistackContainerImageTags.Tag)
-					  .WithEnvironment("MINISTACK_REGION", aWSSDKConfig.Region?.SystemName ?? RegionEndpoint.USEast1.SystemName)
+					  .WithEnvironment("MINISTACK_REGION", resource.Region.SystemName)
 					  .WithHttpEndpoint(
 						  port: options.Port,
 						  targetPort: 4566,
@@ -113,3 +149,4 @@ public static class MinistackResourceBuilderExtensions
 		return ministackBuilder;
 	}
 }
+

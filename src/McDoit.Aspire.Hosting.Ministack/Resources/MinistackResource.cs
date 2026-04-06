@@ -1,8 +1,9 @@
-﻿using Aspire.Hosting.ApplicationModel;
+﻿using Amazon;
+using Aspire.Hosting.ApplicationModel;
 
 namespace McDoit.Aspire.Hosting.Ministack.Resources
 {
-	public sealed class MinistackResource([ResourceName] string name)
+	public sealed class MinistackResource([ResourceName] string name, RegionEndpoint region)
 	: ContainerResource(name), IResourceWithConnectionString, IResourceWithEnvironment, IResourceWithWaitSupport
 	{
 		internal const string HttpEndpointName = "http";
@@ -22,5 +23,11 @@ namespace McDoit.Aspire.Hosting.Ministack.Resources
 			ReferenceExpression.Create(
 				$"http://{HttpEndpoint.Property(EndpointProperty.HostAndPort)}"
 			);
+
+		/// <summary>
+		/// The AWS region configured for this Ministack instance.
+		/// </summary>
+		public RegionEndpoint Region { get; } = region;
 	}
 }
+

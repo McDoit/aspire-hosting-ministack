@@ -1,6 +1,5 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using McDoit.Aspire.Hosting.Ministack.Helpers;
 

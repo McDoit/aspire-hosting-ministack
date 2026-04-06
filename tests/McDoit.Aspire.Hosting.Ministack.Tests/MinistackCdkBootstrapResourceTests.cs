@@ -8,7 +8,6 @@ using Amazon.S3.Model;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using Aspire.Hosting.Testing;
-using McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost;
 
 namespace McDoit.Aspire.Hosting.Ministack.Tests;
 
@@ -58,7 +57,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
 
 public class CdkBootstrapLiveFixture : IAsyncLifetime
 {
-    private DistributedApplicationFactory? _factory;
+    private DistributedApplication? _app;
 
     public IAmazonS3 S3Client { get; private set; } = null!;
     public IAmazonECR EcrClient { get; private set; } = null!;
@@ -67,10 +66,12 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _factory = new DistributedApplicationFactory(typeof(CdkSampleAppHostAssemblyMarker));
-        await _factory.StartAsync();
+        var builder = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
+        _app = await builder.BuildAsync();
+        await _app.StartAsync();
 
-        var connectionString = await _factory.GetConnectionString("ministack")
+        var connectionString = await _app.GetConnectionStringAsync("ministack")
             ?? throw new System.InvalidOperationException("Could not retrieve the Ministack connection string.");
 
         var credentials = new BasicAWSCredentials("ministack", "ministack");
@@ -147,7 +148,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
         CloudFormationClient?.Dispose();
         SsmClient?.Dispose();
 
-        if (_factory is not null)
-            await _factory.DisposeAsync();
+        if (_app is not null)
+            await _app.DisposeAsync();
     }
 }

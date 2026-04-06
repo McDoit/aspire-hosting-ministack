@@ -141,11 +141,12 @@ public class MinistackHostingExtensionsTests
     public void AddMinistack_StoresRegionOnResource()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var awsConfig = builder.AddAWSSDKConfig().WithRegion(RegionEndpoint.EUWest1);
+        var region = RegionEndpoint.EUWest1;
+        var awsConfig = builder.AddAWSSDKConfig().WithRegion(region);
 
         var ministackBuilder = builder.AddMinistack(awsConfig);
 
-        Assert.Equal(RegionEndpoint.EUWest1.SystemName, ministackBuilder.Resource.Region);
+        Assert.Equal(region.SystemName, ministackBuilder.Resource.Region);
     }
 
     [Fact]

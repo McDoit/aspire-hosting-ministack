@@ -27,7 +27,7 @@ namespace McDoit.Aspire.Hosting.Ministack.Resources
 		/// <summary>
 		/// The AWS region configured for this Ministack instance.
 		/// </summary>
-		internal RegionEndpoint? Region { get; set; }
+		public required RegionEndpoint Region { get; set; }
 	}
 }
 

@@ -38,7 +38,7 @@ public static class MinistackResourceBuilderExtensions
 			.WithEnvironment(ctx =>
 			{
 				ctx.EnvironmentVariables["AWS_ENDPOINT_URL"] = builder.Resource.ConnectionStringExpression;
-				ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region!.SystemName;
+				ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region.SystemName;
 				ctx.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
 				ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
 			})
@@ -81,7 +81,7 @@ public static class MinistackResourceBuilderExtensions
 					  .WithImage(options.Image ?? MinistackContainerImageTags.Image)
 					  .WithImageRegistry(options.Registry ?? MinistackContainerImageTags.Registry)
 					  .WithImageTag(options.Tag ?? MinistackContainerImageTags.Tag)
-					  .WithEnvironment("MINISTACK_REGION", resource.Region!.SystemName)
+					  .WithEnvironment("MINISTACK_REGION", resource.Region.SystemName)
 					  .WithHttpEndpoint(
 						  port: options.Port,
 						  targetPort: 4566,

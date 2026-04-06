@@ -18,6 +18,12 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Install Aspire workload
+        run: dotnet workload install aspire
+
+      - name: Install aws-cdk
+        run: npm install -g aws-cdk
+
       - name: Restore
         run: dotnet restore
 
@@ -25,4 +31,6 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test (Release)
-        run: dotnet test --configuration Release --no-build --verbosity normal --filter "Category!=Live"
+        run: dotnet test --configuration Release --no-build --verbosity normal
+        env:
+          CDK_BOOTSTRAP_TIMEOUT_MINUTES: 5

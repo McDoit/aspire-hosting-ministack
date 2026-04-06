@@ -43,6 +43,7 @@ public static class MinistackResourceBuilderExtensions
 				ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
 			})
 			.WithHttpEndpoint(port: port, targetPort: 8080, name: "http", isProxied: !port.HasValue)
+			.WithHttpHealthCheck(path: "/api/health")
 			.WaitFor(builder)
 			.ExcludeFromManifest();
 

@@ -147,5 +147,19 @@ public class MinistackHostingExtensionsTests
 
         Assert.Equal(RegionEndpoint.EUWest1.SystemName, ministackBuilder.Resource.Region);
     }
+
+    [Fact]
+    public void WithStackport_HasHttpHealthCheck()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var awsConfig = builder.AddAWSSDKConfig().WithRegion(RegionEndpoint.USEast1);
+
+        builder.AddMinistack(awsConfig).WithStackport();
+
+        var stackportResource = builder.Resources.OfType<ContainerResource>()
+            .Single(r => r.Name == "stackport");
+
+        Assert.True(stackportResource.Annotations.OfType<HealthCheckAnnotation>().Any());
+    }
 }
 

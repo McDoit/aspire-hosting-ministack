@@ -202,10 +202,10 @@ public static class MinistackResourceBuilderExtensions
 			await process.WaitForExitAsync(cancellationToken);
 
 			await stdout;
+			var errorOutput = await stderr;
 
 			if (process.ExitCode != 0)
 			{
-				var errorOutput = await stderr;
 				throw new InvalidOperationException(
 					$"'npx {arguments}' exited with code {process.ExitCode}. stderr: {errorOutput}");
 			}

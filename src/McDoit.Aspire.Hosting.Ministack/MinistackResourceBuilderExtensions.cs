@@ -68,10 +68,7 @@ public static class MinistackResourceBuilderExtensions
 		[ResourceName] string name = "ministack",
 		Action<MinistackContainerOptions>? configureContainer = null)
 	{
-		var resource = new MinistackResource(name)
-		{
-			Region = aWSSDKConfig.Region ?? RegionEndpoint.USEast1,
-		};
+		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1);
 
 		var options = new MinistackContainerOptions();
 		

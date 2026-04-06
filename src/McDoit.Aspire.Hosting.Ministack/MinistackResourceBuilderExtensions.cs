@@ -1,5 +1,6 @@
 ﻿// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
 // the Aspire hosting package automatically adds this namespace.
+using System.Diagnostics;
 using Amazon;
 using Amazon.Runtime.CredentialManagement;
 using Aspire.Hosting;
@@ -111,5 +112,53 @@ public static class MinistackResourceBuilderExtensions
 		});		
 
 		return ministackBuilder;
+	}
+
+	/// <summary>
+	/// Runs <c>npx cdk bootstrap</c> against the Ministack instance when it becomes available.
+	/// </summary>
+	/// <param name="builder">The <see cref="IResourceBuilder{MinistackResource}"/>.</param>
+	/// <param name="qualifier">An optional CDK bootstrap qualifier passed via <c>--qualifier</c>.</param>
+	/// <returns>The same <see cref="IResourceBuilder{MinistackResource}"/> for chaining.</returns>
+	public static IResourceBuilder<MinistackResource> WithCdkBootstrap(
+		this IResourceBuilder<MinistackResource> builder,
+		string? qualifier = null)
+	{
+		builder.OnConnectionStringAvailable(async (resource, _, cancellationToken) =>
+		{
+			var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
+
+			var arguments = "cdk bootstrap";
+			if (!string.IsNullOrEmpty(qualifier))
+			{
+				arguments += $" --qualifier {qualifier}";
+			}
+
+			using var process = new Process();
+			process.StartInfo = new ProcessStartInfo
+			{
+				FileName = "npx",
+				Arguments = arguments,
+				UseShellExecute = false,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+			};
+			process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
+
+			process.Start();
+
+			var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
+
+			await process.WaitForExitAsync(cancellationToken);
+
+			if (process.ExitCode != 0)
+			{
+				var errorOutput = await stderr;
+				throw new InvalidOperationException(
+					$"'npx {arguments}' exited with code {process.ExitCode}. stderr: {errorOutput}");
+			}
+		});
+
+		return builder;
 	}
 }

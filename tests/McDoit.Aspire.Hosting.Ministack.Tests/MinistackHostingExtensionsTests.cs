@@ -42,4 +42,40 @@ public class MinistackHostingExtensionsTests
 
         Assert.True(ministackBuilder.Resource.Annotations.OfType<ManifestPublishingCallbackAnnotation>().Any());
     }
+
+    [Fact]
+    public void WithCdkBootstrap_ReturnsBuilder()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var awsConfig = builder.AddAWSSDKConfig().WithRegion(RegionEndpoint.USEast1);
+
+        var ministackBuilder = builder.AddMinistack(awsConfig);
+        var result = ministackBuilder.WithCdkBootstrap();
+
+        Assert.Same(ministackBuilder, result);
+    }
+
+    [Fact]
+    public void WithCdkBootstrap_WithQualifier_ReturnsBuilder()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var awsConfig = builder.AddAWSSDKConfig().WithRegion(RegionEndpoint.USEast1);
+
+        var ministackBuilder = builder.AddMinistack(awsConfig);
+        var result = ministackBuilder.WithCdkBootstrap("myqualifier");
+
+        Assert.Same(ministackBuilder, result);
+    }
+
+    [Fact]
+    public void WithCdkBootstrap_CanBeChained()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var awsConfig = builder.AddAWSSDKConfig().WithRegion(RegionEndpoint.USEast1);
+
+        // Should not throw; fluent chaining should work
+        var result = builder.AddMinistack(awsConfig).WithCdkBootstrap();
+
+        Assert.NotNull(result);
+    }
 }

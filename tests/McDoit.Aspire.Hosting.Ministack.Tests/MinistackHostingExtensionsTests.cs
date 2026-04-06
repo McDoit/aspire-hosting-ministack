@@ -146,7 +146,7 @@ public class MinistackHostingExtensionsTests
 
         var ministackBuilder = builder.AddMinistack(awsConfig);
 
-        Assert.Equal(region.SystemName, ministackBuilder.Resource.Region);
+        Assert.Equal(region, ministackBuilder.Resource.Region);
     }
 
     [Fact]

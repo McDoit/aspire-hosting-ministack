@@ -1,4 +1,5 @@
-﻿using Aspire.Hosting.ApplicationModel;
+﻿using Amazon;
+using Aspire.Hosting.ApplicationModel;
 
 namespace McDoit.Aspire.Hosting.Ministack.Resources
 {
@@ -26,7 +27,7 @@ namespace McDoit.Aspire.Hosting.Ministack.Resources
 		/// <summary>
 		/// The AWS region configured for this Ministack instance.
 		/// </summary>
-		internal string? Region { get; set; }
+		internal RegionEndpoint? Region { get; set; }
 	}
 }
 

@@ -25,7 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\McDoit.Aspire.Hosting.Ministack\McDoit.Aspire.Hosting.Ministack.csproj" />
-    <ProjectReference Include="..\..\samples\McDoit.Aspire.Hosting.Ministack.Sample.AppHost\McDoit.Aspire.Hosting.Ministack.Sample.AppHost.csproj" />
+    <ProjectReference Include="..\..\samples\McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost\McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost.csproj" />
+    <ProjectReference Include="..\..\samples\McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost\McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost.csproj" />
   </ItemGroup>
 
 </Project>

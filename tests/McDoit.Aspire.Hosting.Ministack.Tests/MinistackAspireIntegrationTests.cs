@@ -1,6 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using McDoit.Aspire.Hosting.Ministack.Sample.AppHost;
+using McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using McDoit.Aspire.Hosting.Ministack.Helpers;
 
@@ -41,5 +41,5 @@ public class MinistackAspireIntegrationTests(AspireTestingFixture fixture) : ICl
 public class AspireTestingFixture
 {
     public Task<IDistributedApplicationTestingBuilder> CreateBuilderAsync()
-        => DistributedApplicationTestingBuilder.CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_AppHost>();
+        => DistributedApplicationTestingBuilder.CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_CloudFormation_AppHost>();
 }

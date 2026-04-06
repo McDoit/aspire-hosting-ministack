@@ -118,15 +118,28 @@ public static class MinistackResourceBuilderExtensions
 	/// Runs <c>npx cdk bootstrap</c> against the Ministack instance when it becomes available.
 	/// </summary>
 	/// <param name="builder">The <see cref="IResourceBuilder{MinistackResource}"/>.</param>
-	/// <param name="qualifier">An optional CDK bootstrap qualifier passed via <c>--qualifier</c>.</param>
+	/// <param name="qualifier">An optional CDK bootstrap qualifier passed via <c>--qualifier</c>. Must contain only alphanumeric characters and hyphens.</param>
 	/// <returns>The same <see cref="IResourceBuilder{MinistackResource}"/> for chaining.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="qualifier"/> contains characters other than alphanumeric characters and hyphens.</exception>
 	public static IResourceBuilder<MinistackResource> WithCdkBootstrap(
 		this IResourceBuilder<MinistackResource> builder,
 		string? qualifier = null)
 	{
+		if (!string.IsNullOrEmpty(qualifier) && !System.Text.RegularExpressions.Regex.IsMatch(qualifier, @"^[a-zA-Z0-9\-]+$"))
+		{
+			throw new ArgumentException("The CDK bootstrap qualifier must contain only alphanumeric characters and hyphens.", nameof(qualifier));
+		}
+
+		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
+
 		builder.OnConnectionStringAvailable(async (resource, _, cancellationToken) =>
 		{
 			var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
+
+			if (string.IsNullOrEmpty(connectionString))
+			{
+				throw new InvalidOperationException("Ministack connection string is not available.");
+			}
 
 			var arguments = "cdk bootstrap";
 			if (!string.IsNullOrEmpty(qualifier))
@@ -147,9 +160,12 @@ public static class MinistackResourceBuilderExtensions
 
 			process.Start();
 
+			var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken);
 			var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
 
 			await process.WaitForExitAsync(cancellationToken);
+
+			await stdout;
 
 			if (process.ExitCode != 0)
 			{

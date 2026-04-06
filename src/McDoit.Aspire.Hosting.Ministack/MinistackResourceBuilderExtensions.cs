@@ -177,7 +177,13 @@ public static class MinistackResourceBuilderExtensions
 				throw new InvalidOperationException("Ministack connection string is not available.");
 			}
 
-			var arguments = "cdk bootstrap";
+			// Ministack uses a fake AWS account ID of 000000000000.
+			const string fakeAccountId = "000000000000";
+			var region = resource.Region.SystemName;
+
+			// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
+			// endpoint URL is set, otherwise it exits with "Specify an environment name".
+			var arguments = $"cdk bootstrap aws://{fakeAccountId}/{region}";
 			if (!string.IsNullOrEmpty(qualifier))
 			{
 				arguments += $" --qualifier {qualifier}";
@@ -195,7 +201,7 @@ public static class MinistackResourceBuilderExtensions
 			process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
 			process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
 			process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
-			process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = resource.Region.SystemName;
+			process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = region;
 
 			process.Start();
 

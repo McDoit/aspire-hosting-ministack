@@ -20,6 +20,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     : IClassFixture<CdkBootstrapLiveFixture>
 {
     [Fact]
+    [Trait("Category", "Live")]
     public async Task CdkBootstrap_CreatesAssetsBucket()
     {
         var response = await fixture.S3Client.ListBucketsAsync();
@@ -28,6 +29,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     }
 
     [Fact]
+    [Trait("Category", "Live")]
     public async Task CdkBootstrap_CreatesContainerRegistry()
     {
         var response = await fixture.EcrClient.DescribeRepositoriesAsync(new DescribeRepositoriesRequest());
@@ -36,6 +38,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     }
 
     [Fact]
+    [Trait("Category", "Live")]
     public async Task CdkBootstrap_CreatesToolkitStack()
     {
         var response = await fixture.CloudFormationClient.DescribeStacksAsync(
@@ -46,6 +49,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     }
 
     [Fact]
+    [Trait("Category", "Live")]
     public async Task CdkBootstrap_CreatesVersionSsmParameter()
     {
         var response = await fixture.SsmClient.GetParameterAsync(

@@ -38,7 +38,7 @@ public static class MinistackResourceBuilderExtensions
 			.WithEnvironment(ctx =>
 			{
 				ctx.EnvironmentVariables["AWS_ENDPOINT_URL"] = builder.Resource.ConnectionStringExpression;
-				ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region ?? RegionEndpoint.USEast1.SystemName;
+				ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region;
 				ctx.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
 				ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
 			})

@@ -22,5 +22,11 @@ namespace McDoit.Aspire.Hosting.Ministack.Resources
 			ReferenceExpression.Create(
 				$"http://{HttpEndpoint.Property(EndpointProperty.HostAndPort)}"
 			);
+
+		/// <summary>
+		/// The AWS region configured for this Ministack instance.
+		/// </summary>
+		internal string? Region { get; set; }
 	}
 }
+

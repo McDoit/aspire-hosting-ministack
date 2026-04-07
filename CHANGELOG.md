@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.3](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.2...v0.0.3) (2026-04-07)
+
+
+### Features
+
+* Add WithCdkBootstrap extension method to run npx cdk bootstrap against Ministack ([#11](https://github.com/McDoit/aspire-hosting-ministack/issues/11)) ([f24d502](https://github.com/McDoit/aspire-hosting-ministack/commit/f24d5029779cdee20bb03e82db966ba9e4aa7cf7))
+* Add WithStackport() extension to attach davireis/stackport UI to a Ministack resource ([#10](https://github.com/McDoit/aspire-hosting-ministack/issues/10)) ([f4d3ff8](https://github.com/McDoit/aspire-hosting-ministack/commit/f4d3ff8788c58f86728a955ccd521c6dbc1db361))
+
+
+### Miscellaneous Chores
+
+* Set next release version ([c6b3e47](https://github.com/McDoit/aspire-hosting-ministack/commit/c6b3e4756d2e33d5244a88233fc26c052082572f))
+
 ## [0.0.2](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.1...v0.0.2) (2026-04-05)
 
 

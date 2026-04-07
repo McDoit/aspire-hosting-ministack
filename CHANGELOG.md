@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.3...v0.0.4) (2026-04-07)
+
+
+### Features
+
+* Added package tags ([#15](https://github.com/McDoit/aspire-hosting-ministack/issues/15)) ([983580f](https://github.com/McDoit/aspire-hosting-ministack/commit/983580f2e90953bbbf080329c528ffbb81e66c91))
+
 ## [0.0.3](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.2...v0.0.3) (2026-04-07)
 
 

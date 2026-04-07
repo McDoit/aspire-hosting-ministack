@@ -15,7 +15,7 @@
     <RepositoryUrl>https://github.com/McDoit/aspire-hosting-ministack</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>aspire;aws;ministack</PackageTags>
+    <PackageTags>aspire;hosting;aws;ministack</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

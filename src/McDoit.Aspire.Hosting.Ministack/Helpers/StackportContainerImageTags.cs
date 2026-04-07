@@ -1,7 +1,9 @@
 namespace McDoit.Aspire.Hosting.Ministack.Helpers;
 
-// This class just contains constant strings that can be updated periodically
-// when new versions of the underlying container are released.
+/// <summary>
+/// This class just contains constant strings that can be updated periodically
+/// when new versions of the underlying container are released.
+/// </summary>
 internal static class StackportContainerImageTags
 {
 	internal const string Registry = "docker.io";

@@ -1,9 +1,11 @@
-﻿// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
-// the Aspire hosting package automatically adds this namespace.
 using Aspire.Hosting.ApplicationModel;
 
 namespace McDoit.Aspire.Hosting.Ministack;
 
+/// <summary>
+/// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
+/// the Aspire hosting package automatically adds this namespace.
+/// </summary>
 public class MinistackContainerOptions
 {
     public string? Registry { get; set; }
@@ -12,7 +14,7 @@ public class MinistackContainerOptions
 
 	public string? Tag { get; set; }
 
-	//Setting port number, if set will also disable proxying
+	/// <summary>Setting port number, if set will also disable proxying.</summary>
 	public int? Port { get; set; }
 
 	public ContainerLifetime Lifetime { get; set; } = ContainerLifetime.Session;

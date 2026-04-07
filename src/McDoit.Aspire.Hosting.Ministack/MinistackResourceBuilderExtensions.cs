@@ -1,5 +1,3 @@
-﻿// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
-// the Aspire hosting package automatically adds this namespace.
 using Amazon;
 using Amazon.Runtime.CredentialManagement;
 using Aspire.Hosting;
@@ -15,6 +13,10 @@ using System.Runtime.InteropServices;
 
 namespace McDoit.Aspire.Hosting.Ministack;
 
+/// <summary>
+/// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
+/// the Aspire hosting package automatically adds this namespace.
+/// </summary>
 public static class MinistackResourceBuilderExtensions
 {
 	/// <summary>

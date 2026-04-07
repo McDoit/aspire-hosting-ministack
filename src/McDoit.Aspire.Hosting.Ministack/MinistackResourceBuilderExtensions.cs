@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.VisualStudio.Threading;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace McDoit.Aspire.Hosting.Ministack;
 
@@ -177,6 +178,9 @@ public static class MinistackResourceBuilderExtensions
 		{
 			try
 			{
+              static string QuoteForCmd(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
+				static string QuoteForSh(string value) => $"'{value.Replace("'", "'\"'\"'")}'";
+
 				var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
 
 				if (string.IsNullOrEmpty(connectionString))
@@ -190,18 +194,33 @@ public static class MinistackResourceBuilderExtensions
 
 				// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
 				// endpoint URL is set, otherwise it exits with "Specify an environment name".
-				var arguments = $"npx cdk bootstrap aws://{fakeAccountId}/{region} --profile {resource.ProfileName}";
+                var profileArgument = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+					? QuoteForCmd(resource.ProfileName)
+					: QuoteForSh(resource.ProfileName);
+
+				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile {profileArgument}";
+				
 				if (!string.IsNullOrEmpty(qualifier))
 				{
-					arguments += $" --qualifier {qualifier}";
+                   var qualifierArgument = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+						? QuoteForCmd(qualifier)
+						: QuoteForSh(qualifier);
+
+					npxCommand += $" --qualifier {qualifierArgument}";
 				}
+
+				var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+             var shellFileName = isWindows ? "cmd.exe" : "/bin/sh";
+				var shellArguments = isWindows
+					? $"/d /s /c \"{npxCommand}\""
+                    : $"-lc {QuoteForSh(npxCommand)}";
 
 				using var process = new Process
 				{
 					StartInfo = new ProcessStartInfo
 					{
-						FileName = "cmd.exe",
-						Arguments = $"/d /s /c \"{arguments}\"",
+                        FileName = shellFileName,
+						Arguments = shellArguments,
 						UseShellExecute = false,
 						RedirectStandardOutput = true,
 						RedirectStandardError = true,
@@ -248,13 +267,13 @@ public static class MinistackResourceBuilderExtensions
 					if (!process.HasExited)
 						process.Kill(entireProcessTree: true);
 
-					throw new TimeoutException("CDK bootstrap timed out after 2 minutes.");
+					throw new TimeoutException("CDK bootstrap timed out after 1 minute.");
 				}
 
-				if (process.ExitCode != 0)
-					throw new InvalidOperationException($"'npx {arguments}' exited with code {process.ExitCode}.");
+              if (process.ExitCode != 0)
+					throw new InvalidOperationException($"'{npxCommand}' exited with code {process.ExitCode}.");
 			}
-			catch (Exception exc)
+			catch (Exception)
 			{
 				//TODO add bootstrap resource logging
 				throw;

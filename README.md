@@ -10,6 +10,8 @@
 - HTTP endpoint + health check wiring for the `ministack` container
 - AWS profile bootstrapping for local development credentials
 - Container customization via `MinistackContainerOptions`
+- `WithStackport(...)` — adds the [Stackport](https://hub.docker.com/r/davireis/stackport) web UI for browsing local AWS resources
+- `WithCdkBootstrap(...)` — runs `npx cdk bootstrap` against the local Ministack instance when it becomes available
 
 ## Install
 
@@ -49,6 +51,29 @@ builder.AddMinistack(
     });
 ```
 
+## Add Stackport web UI
+
+[Stackport](https://hub.docker.com/r/davireis/stackport) is a universal AWS resource browser for local emulators.
+Chain `WithStackport()` to add it alongside Ministack:
+
+```csharp
+builder.AddMinistack(awsConfig)
+    .WithStackport();
+```
+
+An optional `port` parameter fixes the host port; omitting it lets Aspire assign one automatically.
+
+## CDK bootstrap
+
+`WithCdkBootstrap()` runs `npx cdk bootstrap` against the Ministack endpoint when it becomes available.
+An optional qualifier scopes the bootstrap stack:
+
+```csharp
+builder.AddMinistack(awsConfig)
+    .WithCdkBootstrap("myapp")
+    .WithStackport();
+```
+
 ## Container options reference
 
 | Option | Environment variable | Default | Description |
@@ -73,5 +98,6 @@ Just referencing ```awsConfig``` will enable other resources to connect
 ## Repository structure
 
 - `src/McDoit.Aspire.Hosting.Ministack` - package source
-- `samples/McDoit.Aspire.Hosting.Ministack.Sample.AppHost` - runnable Aspire sample
+- `samples/McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost` - runnable Aspire sample using CloudFormation
+- `samples/McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost` - runnable Aspire sample using CDK bootstrap
 - `tests/McDoit.Aspire.Hosting.Ministack.Tests` - unit + integration tests

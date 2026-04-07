@@ -1,6 +1,5 @@
 ﻿// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
 // the Aspire hosting package automatically adds this namespace.
-using System.Diagnostics;
 using Amazon;
 using Amazon.Runtime.CredentialManagement;
 using Aspire.Hosting;
@@ -10,6 +9,8 @@ using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.VisualStudio.Threading;
+using System.Diagnostics;
 
 namespace McDoit.Aspire.Hosting.Ministack;
 
@@ -68,8 +69,13 @@ public static class MinistackResourceBuilderExtensions
 		IAWSSDKConfig aWSSDKConfig,
 		[ResourceName] string name = "ministack",
 		Action<MinistackContainerOptions>? configureContainer = null)
+	
 	{
-		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1);
+		var prefix = $"{builder.Environment.ApplicationName}-{name}";
+
+		var profileName = $"{prefix}-aspire-profile";
+
+		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1, profileName);
 
 		var options = new MinistackContainerOptions();
 		
@@ -94,7 +100,6 @@ public static class MinistackResourceBuilderExtensions
 			ministackBuilder.WithEnvironment("S3_PERSIST", "1");
 		}
 
-		var prefix = $"{builder.Environment.ApplicationName}-{name}";
 
 		var profileInitDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -110,7 +115,6 @@ public static class MinistackResourceBuilderExtensions
 
 		ministackBuilder.WithHealthCheck($"{prefix}-profile-init");
 
-		var profileName = $"{prefix}-aspire-profile";
 
 		aWSSDKConfig.WithProfile(profileName);
 
@@ -165,58 +169,95 @@ public static class MinistackResourceBuilderExtensions
 		{
 			throw new ArgumentException("The CDK bootstrap qualifier must contain only alphanumeric characters and hyphens.", nameof(qualifier));
 		}
-
+		
 		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
 
-		builder.OnConnectionStringAvailable(async (resource, _, cancellationToken) =>
+
+		builder.OnResourceReady(async (resource, _, cancellationToken) =>
 		{
-			var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
-
-			if (string.IsNullOrEmpty(connectionString))
+			try
 			{
-				throw new InvalidOperationException("Ministack connection string is not available.");
+				var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
+
+				if (string.IsNullOrEmpty(connectionString))
+				{
+					throw new InvalidOperationException("Ministack connection string is not available.");
+				}
+
+				// Ministack uses a fake AWS account ID of 000000000000.
+				const string fakeAccountId = "000000000000";
+				var region = resource.Region.SystemName;
+
+				// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
+				// endpoint URL is set, otherwise it exits with "Specify an environment name".
+				var arguments = $"npx cdk bootstrap aws://{fakeAccountId}/{region} --profile {resource.ProfileName}";
+				if (!string.IsNullOrEmpty(qualifier))
+				{
+					arguments += $" --qualifier {qualifier}";
+				}
+
+				using var process = new Process
+				{
+					StartInfo = new ProcessStartInfo
+					{
+						FileName = "cmd.exe",
+						Arguments = $"/d /s /c \"{arguments}\"",
+						UseShellExecute = false,
+						RedirectStandardOutput = true,
+						RedirectStandardError = true,
+						RedirectStandardInput = false,
+						CreateNoWindow = true,
+						WorkingDirectory = Environment.CurrentDirectory,
+
+					},
+					EnableRaisingEvents = true,
+				};				
+
+				process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
+				process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
+				process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+				process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = region;
+
+				process.OutputDataReceived += (c, e) =>
+				{
+					if (!string.IsNullOrWhiteSpace(e.Data))
+						Console.WriteLine($"[cdk:out] {e.Data}");
+				};
+
+				process.ErrorDataReceived += (c, e) =>
+				{
+					if (!string.IsNullOrWhiteSpace(e.Data))
+						Console.Error.WriteLine($"[cdk:err] {e.Data}");
+				};
+
+				if (!process.Start())
+					throw new InvalidOperationException("Failed to start process.");
+
+				process.BeginOutputReadLine();
+				process.BeginErrorReadLine();
+
+				using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+				using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+				try
+				{
+					await process.WaitForExitAsync(linkedCts.Token);
+				}
+				catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+				{
+					if (!process.HasExited)
+						process.Kill(entireProcessTree: true);
+
+					throw new TimeoutException("CDK bootstrap timed out after 2 minutes.");
+				}
+
+				if (process.ExitCode != 0)
+					throw new InvalidOperationException($"'npx {arguments}' exited with code {process.ExitCode}.");
 			}
-
-			// Ministack uses a fake AWS account ID of 000000000000.
-			const string fakeAccountId = "000000000000";
-			var region = resource.Region.SystemName;
-
-			// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
-			// endpoint URL is set, otherwise it exits with "Specify an environment name".
-			var arguments = $"cdk bootstrap aws://{fakeAccountId}/{region}";
-			if (!string.IsNullOrEmpty(qualifier))
+			catch (Exception exc)
 			{
-				arguments += $" --qualifier {qualifier}";
-			}
-
-			using var process = new Process();
-			process.StartInfo = new ProcessStartInfo
-			{
-				FileName = "npx",
-				Arguments = arguments,
-				UseShellExecute = false,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-			};
-			process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
-			process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
-			process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
-			process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = region;
-
-			process.Start();
-
-			var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken);
-			var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
-
-			await process.WaitForExitAsync(cancellationToken);
-
-			await stdout;
-			var errorOutput = await stderr;
-
-			if (process.ExitCode != 0)
-			{
-				throw new InvalidOperationException(
-					$"'npx {arguments}' exited with code {process.ExitCode}. stderr: {errorOutput}");
+				//TODO add bootstrap resource logging
+				throw;
 			}
 		});
 

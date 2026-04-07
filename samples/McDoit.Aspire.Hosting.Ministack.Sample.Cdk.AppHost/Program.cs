@@ -7,6 +7,7 @@ var awsConfig = builder.AddAWSSDKConfig()
     .WithRegion(RegionEndpoint.USEast1);
 
 builder.AddMinistack(awsConfig)
-    .WithCdkBootstrap("myapp");
+    .WithCdkBootstrap("myapp")
+    .WithStackport();
 
 builder.Build().Run();

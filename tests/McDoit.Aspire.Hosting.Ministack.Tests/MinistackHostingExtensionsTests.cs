@@ -11,7 +11,7 @@ public class MinistackHostingExtensionsTests
     [Fact]
     public void ConnectionStringExpression_IsCreated()
     {
-        var resource = new MinistackResource("ministack", RegionEndpoint.USEast1);
+        var resource = new MinistackResource("ministack", RegionEndpoint.USEast1, "profileName");
 
         var expression = resource.ConnectionStringExpression;
 

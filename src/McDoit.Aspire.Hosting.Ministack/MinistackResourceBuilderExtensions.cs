@@ -178,9 +178,6 @@ public static class MinistackResourceBuilderExtensions
 		{
 			try
 			{
-              static string QuoteForCmd(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
-				static string QuoteForSh(string value) => $"'{value.Replace("'", "'\"'\"'")}'";
-
 				var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
 
 				if (string.IsNullOrEmpty(connectionString))
@@ -194,43 +191,41 @@ public static class MinistackResourceBuilderExtensions
 
 				// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
 				// endpoint URL is set, otherwise it exits with "Specify an environment name".
-                var profileArgument = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-					? QuoteForCmd(resource.ProfileName)
-					: QuoteForSh(resource.ProfileName);
-
-				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile {profileArgument}";
-				
-				if (!string.IsNullOrEmpty(qualifier))
-				{
-                   var qualifierArgument = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-						? QuoteForCmd(qualifier)
-						: QuoteForSh(qualifier);
-
-					npxCommand += $" --qualifier {qualifierArgument}";
-				}
-
 				var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-             var shellFileName = isWindows ? "cmd.exe" : "/bin/sh";
-				var shellArguments = isWindows
-					? $"/d /s /c \"{npxCommand}\""
-                    : $"-lc {QuoteForSh(npxCommand)}";
+				var shellFileName = isWindows ? "cmd.exe" : "bash";
 
 				using var process = new Process
 				{
 					StartInfo = new ProcessStartInfo
 					{
-                        FileName = shellFileName,
-						Arguments = shellArguments,
+						FileName = shellFileName,
 						UseShellExecute = false,
 						RedirectStandardOutput = true,
 						RedirectStandardError = true,
-						RedirectStandardInput = false,
 						CreateNoWindow = true,
 						WorkingDirectory = Environment.CurrentDirectory,
-
 					},
 					EnableRaisingEvents = true,
-				};				
+				};
+
+				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile \"{resource.ProfileName}\"";
+				if (!string.IsNullOrEmpty(qualifier))
+				{
+					npxCommand += $" --qualifier \"{qualifier}\"";
+				}
+
+				if (isWindows)
+				{
+					process.StartInfo.ArgumentList.Add("/d");
+					process.StartInfo.ArgumentList.Add("/s");
+					process.StartInfo.ArgumentList.Add("/c");
+					process.StartInfo.ArgumentList.Add(npxCommand);
+				}
+				else
+				{
+					process.StartInfo.ArgumentList.Add("-lc");
+					process.StartInfo.ArgumentList.Add(npxCommand);
+				}
 
 				process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
 				process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
@@ -273,7 +268,7 @@ public static class MinistackResourceBuilderExtensions
               if (process.ExitCode != 0)
 					throw new InvalidOperationException($"'{npxCommand}' exited with code {process.ExitCode}.");
 			}
-			catch (Exception)
+			catch (Exception exc)
 			{
 				//TODO add bootstrap resource logging
 				throw;

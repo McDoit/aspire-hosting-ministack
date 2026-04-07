@@ -5,6 +5,7 @@ This sample shows how to:
 - configure AWS settings with `AddAWSSDKConfig()`
 - add `ministack` with `AddMinistack(...)`
 - run CDK bootstrap against the local Ministack instance with `WithCdkBootstrap(...)`
+- add the Stackport web UI with `WithStackport()`
 
 ## CDK bootstrap
 

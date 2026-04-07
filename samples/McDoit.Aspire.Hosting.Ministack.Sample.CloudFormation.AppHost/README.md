@@ -17,7 +17,7 @@ This sample shows how to:
 From repository root:
 
 ```bash
-dotnet run --project samples/McDoit.Aspire.Hosting.Ministack.Sample.AppHost
+dotnet run --project samples/McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost
 ```
 
 The sample also configures a container (`resource-inspector`) that consumes CloudFormation outputs via environment variables.

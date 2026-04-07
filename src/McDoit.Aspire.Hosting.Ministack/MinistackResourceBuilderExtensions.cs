@@ -9,6 +9,9 @@ using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.VisualStudio.Threading;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace McDoit.Aspire.Hosting.Ministack;
 
@@ -67,8 +70,13 @@ public static class MinistackResourceBuilderExtensions
 		IAWSSDKConfig aWSSDKConfig,
 		[ResourceName] string name = "ministack",
 		Action<MinistackContainerOptions>? configureContainer = null)
+	
 	{
-		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1);
+		var prefix = $"{builder.Environment.ApplicationName}-{name}";
+
+		var profileName = $"{prefix}-aspire-profile";
+
+		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1, profileName);
 
 		var options = new MinistackContainerOptions();
 		
@@ -93,7 +101,6 @@ public static class MinistackResourceBuilderExtensions
 			ministackBuilder.WithEnvironment("S3_PERSIST", "1");
 		}
 
-		var prefix = $"{builder.Environment.ApplicationName}-{name}";
 
 		var profileInitDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -109,7 +116,6 @@ public static class MinistackResourceBuilderExtensions
 
 		ministackBuilder.WithHealthCheck($"{prefix}-profile-init");
 
-		var profileName = $"{prefix}-aspire-profile";
 
 		aWSSDKConfig.WithProfile(profileName);
 
@@ -147,6 +153,129 @@ public static class MinistackResourceBuilderExtensions
 		});		
 
 		return ministackBuilder;
+	}
+
+	/// <summary>
+	/// Runs <c>npx cdk bootstrap</c> against the Ministack instance when it becomes available.
+	/// </summary>
+	/// <param name="builder">The <see cref="IResourceBuilder{MinistackResource}"/>.</param>
+	/// <param name="qualifier">An optional CDK bootstrap qualifier passed via <c>--qualifier</c>. Must contain only alphanumeric characters and hyphens.</param>
+	/// <returns>The same <see cref="IResourceBuilder{MinistackResource}"/> for chaining.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="qualifier"/> contains characters other than alphanumeric characters and hyphens.</exception>
+	public static IResourceBuilder<MinistackResource> WithCdkBootstrap(
+		this IResourceBuilder<MinistackResource> builder,
+		string? qualifier = null)
+	{
+		if (!string.IsNullOrEmpty(qualifier) && !System.Text.RegularExpressions.Regex.IsMatch(qualifier, @"^[a-zA-Z0-9\-]+$"))
+		{
+			throw new ArgumentException("The CDK bootstrap qualifier must contain only alphanumeric characters and hyphens.", nameof(qualifier));
+		}
+		
+		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
+
+
+		builder.OnResourceReady(async (resource, _, cancellationToken) =>
+		{
+			try
+			{
+				var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
+
+				if (string.IsNullOrEmpty(connectionString))
+				{
+					throw new InvalidOperationException("Ministack connection string is not available.");
+				}
+
+				// Ministack uses a fake AWS account ID of 000000000000.
+				const string fakeAccountId = "000000000000";
+				var region = resource.Region.SystemName;
+
+				// CDK requires an explicit environment (aws://ACCOUNT/REGION) when a custom
+				// endpoint URL is set, otherwise it exits with "Specify an environment name".
+				var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+				var shellFileName = isWindows ? "cmd.exe" : "bash";
+
+				using var process = new Process
+				{
+					StartInfo = new ProcessStartInfo
+					{
+						FileName = shellFileName,
+						UseShellExecute = false,
+						RedirectStandardOutput = true,
+						RedirectStandardError = true,
+						CreateNoWindow = true,
+						WorkingDirectory = Environment.CurrentDirectory,
+					},
+					EnableRaisingEvents = true,
+				};
+
+				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile \"{resource.ProfileName}\"";
+				if (!string.IsNullOrEmpty(qualifier))
+				{
+					npxCommand += $" --qualifier \"{qualifier}\"";
+				}
+
+				if (isWindows)
+				{
+					process.StartInfo.ArgumentList.Add("/d");
+					process.StartInfo.ArgumentList.Add("/s");
+					process.StartInfo.ArgumentList.Add("/c");
+					process.StartInfo.ArgumentList.Add(npxCommand);
+				}
+				else
+				{
+					process.StartInfo.ArgumentList.Add("-lc");
+					process.StartInfo.ArgumentList.Add(npxCommand);
+				}
+
+				process.StartInfo.EnvironmentVariables["AWS_ENDPOINT_URL"] = connectionString;
+				process.StartInfo.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
+				process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+				process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = region;
+
+				process.OutputDataReceived += (c, e) =>
+				{
+					if (!string.IsNullOrWhiteSpace(e.Data))
+						Console.WriteLine($"[cdk:out] {e.Data}");
+				};
+
+				process.ErrorDataReceived += (c, e) =>
+				{
+					if (!string.IsNullOrWhiteSpace(e.Data))
+						Console.Error.WriteLine($"[cdk:err] {e.Data}");
+				};
+
+				if (!process.Start())
+					throw new InvalidOperationException("Failed to start process.");
+
+				process.BeginOutputReadLine();
+				process.BeginErrorReadLine();
+
+				using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+				using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+				try
+				{
+					await process.WaitForExitAsync(linkedCts.Token);
+				}
+				catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+				{
+					if (!process.HasExited)
+						process.Kill(entireProcessTree: true);
+
+					throw new TimeoutException("CDK bootstrap timed out after 1 minute.");
+				}
+
+              if (process.ExitCode != 0)
+					throw new InvalidOperationException($"'{npxCommand}' exited with code {process.ExitCode}.");
+			}
+			catch (Exception exc)
+			{
+				//TODO add bootstrap resource logging
+				throw;
+			}
+		});
+
+		return builder;
 	}
 }
 

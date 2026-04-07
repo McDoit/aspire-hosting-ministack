@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/samples/">
-    <Project Path="samples/McDoit.Aspire.Hosting.Ministack.Sample.AppHost/McDoit.Aspire.Hosting.Ministack.Sample.AppHost.csproj" />
+    <Project Path="samples/McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost/McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost.csproj" />
+    <Project Path="samples/McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost/McDoit.Aspire.Hosting.Ministack.Sample.Cdk.AppHost.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/McDoit.Aspire.Hosting.Ministack/McDoit.Aspire.Hosting.Ministack.csproj" />

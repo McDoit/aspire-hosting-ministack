@@ -9,6 +9,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +19,9 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Install aws-cdk
+        run: npm install -g aws-cdk
+
       - name: Restore
         run: dotnet restore
 
@@ -25,4 +29,6 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test (Release)
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal --blame-hang --blame-hang-timeout 15m
+        env:
+          CDK_BOOTSTRAP_TIMEOUT_MINUTES: 10

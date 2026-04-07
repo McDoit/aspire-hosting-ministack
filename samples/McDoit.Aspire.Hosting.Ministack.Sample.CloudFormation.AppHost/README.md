@@ -1,4 +1,4 @@
-# Sample AppHost (`samples/McDoit.Aspire.Hosting.Ministack.Sample.AppHost`)
+# CloudFormation Sample AppHost (`samples/McDoit.Aspire.Hosting.Ministack.Sample.CloudFormation.AppHost`)
 
 This sample shows how to:
 

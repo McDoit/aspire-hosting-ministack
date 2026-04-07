@@ -15,7 +15,8 @@ var awsResources = builder.AddAWSCloudFormationTemplate(
     .WithParameter("QueueName", "sample-events-queue")
     .WithParameter("TopicName", "sample-events-topic")
     .WithParameter("TableName", "sample-items-table")
-    .WithReference(awsConfig);
+	.WithReference(awsConfig)
+	.WaitFor(ministack);
 
 builder.AddContainer("resource-inspector", "alpine")
     .WithEntrypoint("/bin/sh")

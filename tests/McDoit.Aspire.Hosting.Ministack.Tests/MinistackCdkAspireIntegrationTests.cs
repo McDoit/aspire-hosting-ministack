@@ -5,17 +5,17 @@ using McDoit.Aspire.Hosting.Ministack.Helpers;
 
 namespace McDoit.Aspire.Hosting.Ministack.Tests;
 
-public class MinistackAspireIntegrationTests(AspireTestingFixture fixture) : IClassFixture<AspireTestingFixture>
+public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture) : IClassFixture<CdkAspireTestingFixture>
 {
     [Fact]
-    public void SampleAppHost_CreatesMinistackResource()
+    public void CdkSampleAppHost_CreatesMinistackResource()
     {
         var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         Assert.Equal("ministack", resource.Name);
-	}
+    }
 
     [Fact]
-    public void SampleAppHost_UsesConfigureContainerValuesForMinistack()
+    public void CdkSampleAppHost_UsesExpectedContainerImage()
     {
         var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
 
@@ -23,13 +23,25 @@ public class MinistackAspireIntegrationTests(AspireTestingFixture fixture) : ICl
         Assert.Equal(MinistackContainerImageTags.Registry, imageAnnotation.Registry);
         Assert.Equal(MinistackContainerImageTags.Image, imageAnnotation.Image);
         Assert.Equal(MinistackContainerImageTags.Tag, imageAnnotation.Tag);
+    }
 
-        var endpoint = Assert.Single(resource.Annotations.OfType<EndpointAnnotation>(), e => e.Name == MinistackResource.HttpEndpointName);
-        Assert.Equal(4566, endpoint.TargetPort);
+    [Fact]
+    public void CdkSampleAppHost_HasCdkBootstrapConfigured()
+    {
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
+        Assert.True(resource.Annotations.OfType<CdkBootstrapAnnotation>().Any());
+    }
+
+    [Fact]
+    public void CdkSampleAppHost_CdkBootstrapAnnotation_HasExpectedQualifier()
+    {
+        var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
+        var annotation = Assert.Single(resource.Annotations.OfType<CdkBootstrapAnnotation>());
+        Assert.Equal("myapp", annotation.Qualifier);
     }
 }
 
-public class AspireTestingFixture : IAsyncLifetime
+public class CdkAspireTestingFixture : IAsyncLifetime
 {
     private DistributedApplication? _app;
 
@@ -38,7 +50,7 @@ public class AspireTestingFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         Builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_CloudFormation_AppHost>();
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
         _app = await Builder.BuildAsync();
     }
 

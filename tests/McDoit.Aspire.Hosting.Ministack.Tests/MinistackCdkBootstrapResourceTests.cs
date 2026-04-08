@@ -13,6 +13,7 @@ namespace McDoit.Aspire.Hosting.Ministack.Tests;
 /// These tests require Docker and <c>npx</c>/<c>aws-cdk</c> to be available.
 /// </summary>
 [Collection("Sample CDK App collection")]
+[Trait("Category", "LiveIntegration")]
 public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
 {
     [Fact]

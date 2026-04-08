@@ -1,6 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 
-namespace McDoit.Aspire.Hosting.Ministack;
+namespace McDoit.Aspire.Hosting.Ministack.Helpers;
 
 /// <summary>
 /// Annotation that marks a Ministack resource as having CDK bootstrap configured.

@@ -1,11 +1,11 @@
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using McDoit.Aspire.Hosting.Ministack.Helpers;
+using McDoit.Aspire.Hosting.Ministack.Tests.Fixture;
 
 namespace McDoit.Aspire.Hosting.Ministack.Tests;
 
-public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture) : IClassFixture<CdkAspireTestingFixture>
+[Collection("Sample CDK App collection")]
+public class MinistackCdkAspireIntegrationTests(CdkBootstrapLiveFixture fixture)
 {
     [Fact]
     public void CdkSampleAppHost_CreatesMinistackResource()
@@ -38,25 +38,5 @@ public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture)
         var resource = Assert.Single(fixture.Builder.Resources.OfType<MinistackResource>());
         var annotation = Assert.Single(resource.Annotations.OfType<CdkBootstrapAnnotation>());
         Assert.Equal("myapp", annotation.Qualifier);
-    }
-}
-
-public class CdkAspireTestingFixture : IAsyncLifetime
-{
-    private DistributedApplication? _app;
-
-    public IDistributedApplicationTestingBuilder Builder { get; private set; } = null!;
-
-    public async Task InitializeAsync()
-    {
-        Builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
-        _app = await Builder.BuildAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_app is not null)
-            await _app.DisposeAsync();
     }
 }

@@ -3,6 +3,7 @@ using Aspire.Hosting.ApplicationModel;
 
 namespace McDoit.Aspire.Hosting.Ministack.Resources
 {
+
 	public sealed class MinistackResource([ResourceName] string name, RegionEndpoint region, string profileName)
 	: ContainerResource(name), IResourceWithConnectionString, IResourceWithEnvironment, IResourceWithWaitSupport
 	{

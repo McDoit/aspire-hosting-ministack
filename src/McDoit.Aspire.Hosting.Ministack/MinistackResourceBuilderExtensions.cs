@@ -180,7 +180,6 @@ public static class MinistackResourceBuilderExtensions
 		
 		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
 
-
 		builder.OnResourceReady(async (resource, _, cancellationToken) =>
 		{
 			try
@@ -218,7 +217,7 @@ public static class MinistackResourceBuilderExtensions
 				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile \"{resource.ProfileName}\"";
 				if (!string.IsNullOrEmpty(qualifier))
 				{
-					npxCommand += $" --qualifier \"{qualifier}\"";
+					npxCommand += $" --qualifier \"{qualifier}\" --toolkit-stack-name \"CDKToolkit-{qualifier}\"";
 				}
 
 				if (isWindows)

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.5...v0.0.6) (2026-04-08)
+
+
+### Features
+
+* Configure stackport ([#20](https://github.com/McDoit/aspire-hosting-ministack/issues/20)) ([4173012](https://github.com/McDoit/aspire-hosting-ministack/commit/41730129f09c5dea74f5488f48002aed1857f303))
+
 ## [0.0.5](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.4...v0.0.5) (2026-04-07)
 
 

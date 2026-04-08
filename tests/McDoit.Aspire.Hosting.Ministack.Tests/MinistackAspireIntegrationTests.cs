@@ -35,14 +35,14 @@ public class AspireTestingFixture : IAsyncLifetime
 
     public IDistributedApplicationTestingBuilder Builder { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Builder = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_CloudFormation_AppHost>();
         _app = await Builder.BuildAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_app is not null)
             await _app.DisposeAsync();

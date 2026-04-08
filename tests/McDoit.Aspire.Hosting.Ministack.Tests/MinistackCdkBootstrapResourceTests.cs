@@ -55,6 +55,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     }
 }
 
+//[assembly: AssemblyFixture(typeof(DatabaseFixture))]
 public class CdkBootstrapLiveFixture : IAsyncLifetime
 {
     private DistributedApplication? _app;

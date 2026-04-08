@@ -1,3 +1,5 @@
+﻿// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
+// the Aspire hosting package automatically adds this namespace.
 using Amazon;
 using Amazon.Runtime.CredentialManagement;
 using Aspire.Hosting;
@@ -11,12 +13,8 @@ using Microsoft.VisualStudio.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace McDoit.Aspire.Hosting.Ministack;
+namespace Aspire.Hosting;
 
-/// <summary>
-/// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing
-/// the Aspire hosting package automatically adds this namespace.
-/// </summary>
 public static class MinistackResourceBuilderExtensions
 {
 	/// <summary>
@@ -25,6 +23,7 @@ public static class MinistackResourceBuilderExtensions
 	/// Stackport is a universal AWS resource browser for local emulators.
 	/// </summary>
 	/// <param name="builder">The <see cref="IResourceBuilder{MinistackResource}"/>.</param>
+	/// <param name="configureContainer">Configuration callback for <see cref="IResourceBuilder{StackportResource}"/> container resource.</param>
 	/// <param name="name">The name of the Stackport resource. Defaults to <c>"stackport"</c>.</param>
 	/// <param name="port">An optional host port to expose the Stackport web UI on.</param>
 	/// <returns>
@@ -32,11 +31,12 @@ public static class MinistackResourceBuilderExtensions
 	/// </returns>
 	public static IResourceBuilder<MinistackResource> WithStackport(
 		this IResourceBuilder<MinistackResource> builder,
+		Action<IResourceBuilder<StackportResource>>? configureContainer = null,
 		[ResourceName] string name = "stackport",
 		int? port = null)
 	{
-		builder.ApplicationBuilder
-			.AddResource(new ContainerResource(name))
+		var stackportContainerBuilder = builder.ApplicationBuilder
+			.AddResource(new StackportResource(name, builder.Resource))
 			.WithImage(StackportContainerImageTags.Image)
 			.WithImageRegistry(StackportContainerImageTags.Registry)
 			.WithImageTag(StackportContainerImageTags.Tag)
@@ -49,8 +49,11 @@ public static class MinistackResourceBuilderExtensions
 			})
 			.WithHttpEndpoint(port: port, targetPort: 8080, name: "http", isProxied: !port.HasValue)
 			.WithHttpHealthCheck(path: "/api/health")
-			.WaitFor(builder)
+			.WithParentRelationship(builder.Resource)
+			//.WaitFor(builder)
 			.ExcludeFromManifest();
+
+		configureContainer?.Invoke(stackportContainerBuilder);
 
 		return builder;
 	}
@@ -60,7 +63,7 @@ public static class MinistackResourceBuilderExtensions
 	/// <paramref name="builder"/> instance.
 	/// </summary>
 	/// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
-	/// <param name="aWSSDKConfig">The <see cref="IAWSSDKConfig"/>.</param>
+	/// <param name="awsSDKConfig">The <see cref="IAWSSDKConfig"/>.</param>
 	/// <param name="name">The name of the resource.</param>
 	/// <param name="configureContainer">An action to configure the <see cref="MinistackContainerOptions"/>.</param>
 	/// <returns>
@@ -69,20 +72,21 @@ public static class MinistackResourceBuilderExtensions
 	/// </returns>
 	public static IResourceBuilder<MinistackResource> AddMinistack(
 		this IDistributedApplicationBuilder builder,
-		IAWSSDKConfig aWSSDKConfig,
-		[ResourceName] string name = "ministack",
-		Action<MinistackContainerOptions>? configureContainer = null)
+		IAWSSDKConfig awsSDKConfig,
+		Action<IResourceBuilder<MinistackResource>>? configureContainer = null,
+		Action<MinistackContainerOptions>? configureContainerOptions = null,
+		[ResourceName] string name = "ministack")
 	
 	{
 		var prefix = $"{builder.Environment.ApplicationName}-{name}";
 
 		var profileName = $"{prefix}-aspire-profile";
 
-		var resource = new MinistackResource(name, aWSSDKConfig.Region ?? RegionEndpoint.USEast1, profileName);
+		var resource = new MinistackResource(name, awsSDKConfig.Region ?? RegionEndpoint.USEast1, profileName);
 
 		var options = new MinistackContainerOptions();
-		
-		configureContainer?.Invoke(options);
+
+		configureContainerOptions?.Invoke(options);
 
         var ministackBuilder = builder.AddResource(resource)
 					  .WithImage(options.Image ?? MinistackContainerImageTags.Image)
@@ -118,8 +122,7 @@ public static class MinistackResourceBuilderExtensions
 
 		ministackBuilder.WithHealthCheck($"{prefix}-profile-init");
 
-
-		aWSSDKConfig.WithProfile(profileName);
+		awsSDKConfig.WithProfile(profileName);
 
 		ministackBuilder.OnConnectionStringAvailable(async (ministackResource, connectionStringAvailableEvent, cancellationToken) =>
 		{
@@ -152,7 +155,9 @@ public static class MinistackResourceBuilderExtensions
 				profileInitDone.TrySetException(exc);
 				throw;
 			}
-		});		
+		});
+
+		configureContainer?.Invoke(ministackBuilder);
 
 		return ministackBuilder;
 	}

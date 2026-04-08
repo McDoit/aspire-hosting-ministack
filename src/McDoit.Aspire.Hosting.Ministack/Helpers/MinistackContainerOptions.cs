@@ -1,6 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 
-namespace McDoit.Aspire.Hosting.Ministack;
+namespace McDoit.Aspire.Hosting.Ministack.Helpers;
 
 /// <summary>
 /// Put extensions in the Aspire.Hosting namespace to ease discovery as referencing

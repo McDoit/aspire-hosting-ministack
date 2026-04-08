@@ -41,6 +41,7 @@ public class MinistackCdkAspireIntegrationTests(CdkAspireTestingFixture fixture)
     }
 }
 
+
 public class CdkAspireTestingFixture : IAsyncLifetime
 {
     private DistributedApplication? _app;

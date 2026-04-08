@@ -24,7 +24,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 
     public MinistackResource MinistackResource { get; private set; } = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
     {
         // Guard against the app or CDK bootstrap hanging indefinitely.
         var startupTimeout = TimeSpan.FromMinutes(GetBootstrapTimeout().TotalMinutes + 5);
@@ -112,7 +112,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             "The CDKToolkit CloudFormation stack did not reach CREATE_COMPLETE.");
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         S3Client?.Dispose();
         EcrClient?.Dispose();

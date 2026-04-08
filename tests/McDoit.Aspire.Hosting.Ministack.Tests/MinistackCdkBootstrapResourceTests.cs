@@ -13,12 +13,13 @@ namespace McDoit.Aspire.Hosting.Ministack.Tests;
 /// These tests require Docker and <c>npx</c>/<c>aws-cdk</c> to be available.
 /// </summary>
 [Collection("Sample CDK App collection")]
+[Trait("Category", "LiveIntegration")]
 public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
 {
     [Fact]
     public async Task CdkBootstrap_CreatesAssetsBucket()
     {
-        var response = await fixture.S3Client.ListBucketsAsync();
+        var response = await fixture.S3Client.ListBucketsAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains(response.Buckets, b => b.BucketName.StartsWith("cdk-myapp-assets-"));
     }
@@ -26,7 +27,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     [Fact]
     public async Task CdkBootstrap_CreatesContainerRegistry()
     {
-        var response = await fixture.EcrClient.DescribeRepositoriesAsync(new DescribeRepositoriesRequest());
+        var response = await fixture.EcrClient.DescribeRepositoriesAsync(new DescribeRepositoriesRequest(), TestContext.Current.CancellationToken);
 
         Assert.Contains(response.Repositories, r => r.RepositoryName.StartsWith("cdk-myapp-container-assets-"));
     }
@@ -37,7 +38,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
 		var annotation = Assert.Single(fixture.MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>());
 
 		var response = await fixture.CloudFormationClient.DescribeStacksAsync(
-            new DescribeStacksRequest { StackName = "CDKToolkit-" + annotation.Qualifier });
+            new DescribeStacksRequest { StackName = "CDKToolkit-" + annotation.Qualifier }, TestContext.Current.CancellationToken);
 
         var stack = Assert.Single(response.Stacks);
         Assert.Equal(StackStatus.CREATE_COMPLETE, stack.StackStatus);
@@ -47,7 +48,7 @@ public class MinistackCdkBootstrapResourceTests(CdkBootstrapLiveFixture fixture)
     public async Task CdkBootstrap_CreatesVersionSsmParameter()
     {
         var response = await fixture.SsmClient.GetParameterAsync(
-            new GetParameterRequest { Name = "/cdk-bootstrap/myapp/version" });
+            new GetParameterRequest { Name = "/cdk-bootstrap/myapp/version" }, TestContext.Current.CancellationToken);
 
         Assert.NotNull(response.Parameter.Value);
     }

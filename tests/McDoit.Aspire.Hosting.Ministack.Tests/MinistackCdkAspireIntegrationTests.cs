@@ -5,6 +5,7 @@ using McDoit.Aspire.Hosting.Ministack.Tests.Fixture;
 namespace McDoit.Aspire.Hosting.Ministack.Tests;
 
 [Collection("Sample CDK App collection")]
+[Trait("Category", "LiveIntegration")]
 public class MinistackCdkAspireIntegrationTests(CdkBootstrapLiveFixture fixture)
 {
     [Fact]

@@ -29,11 +29,13 @@ namespace McDoit.Aspire.Hosting.Ministack.Resources
 				$"http://{HttpEndpoint.Property(EndpointProperty.HostAndPort)}"
 			);
 
+		public string AccountId => "000000000000";
 		/// <summary>
 		/// The AWS region configured for this Ministack instance.
 		/// </summary>
 		public RegionEndpoint Region { get; } = region;
 		public string ProfileName { get; } = profileName;
+
 
 	}
 }

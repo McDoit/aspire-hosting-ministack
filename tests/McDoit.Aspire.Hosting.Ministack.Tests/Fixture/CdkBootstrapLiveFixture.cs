@@ -1,6 +1,8 @@
+using Amazon;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.ECR;
+using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
@@ -19,7 +21,8 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
     private DistributedApplication? _app;
 
     public IAmazonS3 S3Client { get; private set; } = null!;
-    public IAmazonECR EcrClient { get; private set; } = null!;
+	public IAmazonIdentityManagementService IamClient { get; private set; } = null!;
+	public IAmazonECR EcrClient { get; private set; } = null!;
     public IAmazonCloudFormation CloudFormationClient { get; private set; } = null!;
     public IAmazonSimpleSystemsManagement SsmClient { get; private set; } = null!;
 
@@ -36,7 +39,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
         using var startupCts = new CancellationTokenSource(startupTimeout);
 
 		Builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>(Array.Empty<string>(), configureBuilder: (dao, habs) =>
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>([], configureBuilder: (dao, habs) =>
             {
                 dao.DisableDashboard = true;
                 dao.TrustDeveloperCertificate = true;
@@ -46,39 +49,28 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
         _app = await Builder.BuildAsync();
         await _app.StartAsync(startupCts.Token);
 
-		MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault(f => f != null)
+		MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault()
             ?? throw new System.InvalidOperationException("The sample CDK AppHost did not create a MinistackResource as expected.");
 
 		_logger = _app.Services.GetRequiredService<ResourceLoggerService>()
 										.GetLogger(MinistackResource);
 
-        var connectionString = await _app.GetConnectionStringAsync(MinistackResource.Name, startupCts.Token);
-
-		Environment.SetEnvironmentVariable("AWS_PROFILE", MinistackResource.ProfileName);
-		Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL", connectionString);
-
-		S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
-        {
-            ServiceURL = connectionString,
+        AWSConfigs.AWSProfileName = MinistackResource.ProfileName;
+        
+		S3Client = new AmazonS3Client(new AmazonS3Config
+        {                
 			ForcePathStyle = true
         });
 
-        EcrClient = new AmazonECRClient("test", "test", new AmazonECRConfig
-        {
-            ServiceURL = connectionString,
-        });
+        EcrClient = new AmazonECRClient();
 
-        CloudFormationClient = new AmazonCloudFormationClient("test", "test", new AmazonCloudFormationConfig
-        {
-            ServiceURL = connectionString,
-		});
+        CloudFormationClient = new AmazonCloudFormationClient();
 
-        SsmClient = new AmazonSimpleSystemsManagementClient("test", "test", new AmazonSimpleSystemsManagementConfig
-        {
-            ServiceURL = connectionString,
-        });
+        SsmClient = new AmazonSimpleSystemsManagementClient();
 
-        await WaitForCdkBootstrapAsync(MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>().First(), startupCts.Token);
+        IamClient = new AmazonIdentityManagementServiceClient();
+
+		await WaitForCdkBootstrapAsync(MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>().First(), startupCts.Token);
     }
 
     private static TimeSpan GetBootstrapTimeout()
@@ -113,7 +105,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             try
             {
                 var response = await CloudFormationClient.DescribeStacksAsync(
-                    new DescribeStacksRequest { StackName = "CDKToolkit-" + annotation.Qualifier }, cancellationToken);
+                    new DescribeStacksRequest { StackName = string.IsNullOrWhiteSpace(annotation.Qualifier) ? "CDKToolkit" : "CDKToolkit-" + annotation.Qualifier }, cancellationToken);
 
                 var stack = response.Stacks.FirstOrDefault();
                 if (stack is not null)

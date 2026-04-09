@@ -52,6 +52,8 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 		MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault()
             ?? throw new System.InvalidOperationException("The sample CDK AppHost did not create a MinistackResource as expected.");
 
+		await _app.ResourceNotifications.WaitForResourceHealthyAsync(MinistackResource.Name, startupCts.Token);
+
 		_logger = _app.Services.GetRequiredService<ResourceLoggerService>()
 										.GetLogger(MinistackResource);
 

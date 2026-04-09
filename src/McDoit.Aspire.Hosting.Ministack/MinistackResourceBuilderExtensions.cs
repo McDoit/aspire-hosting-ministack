@@ -9,6 +9,7 @@ using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -180,6 +181,7 @@ public static class MinistackResourceBuilderExtensions
 		
 		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
 
+
 		builder.OnResourceReady(async (resource, _, cancellationToken) =>
 		{
 			try
@@ -215,6 +217,7 @@ public static class MinistackResourceBuilderExtensions
 				};
 
 				var npxCommand = $"npx --yes cdk bootstrap aws://{fakeAccountId}/{region} --profile \"{resource.ProfileName}\"";
+
 				if (!string.IsNullOrEmpty(qualifier))
 				{
 					npxCommand += $" --qualifier \"{qualifier}\" --toolkit-stack-name \"CDKToolkit-{qualifier}\"";
@@ -276,7 +279,11 @@ public static class MinistackResourceBuilderExtensions
 			}
 			catch (Exception exc)
 			{
-				//TODO add bootstrap resource logging
+				var logger = builder.ApplicationBuilder.ExecutionContext.ServiceProvider.GetRequiredService<ResourceLoggerService>()
+									.GetLogger(builder.Resource);
+				
+				logger.LogError(exc, "CDK bootstrap failed.");
+				
 				throw;
 			}
 		});

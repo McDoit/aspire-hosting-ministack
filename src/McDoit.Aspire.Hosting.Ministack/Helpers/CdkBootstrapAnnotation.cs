@@ -7,6 +7,7 @@ namespace McDoit.Aspire.Hosting.Ministack.Helpers;
 /// </summary>
 public sealed class CdkBootstrapAnnotation : IResourceAnnotation
 {
+	public const string DefaultQualifer = "hnb659fds";
 	/// <summary>
 	/// Gets the optional bootstrap qualifier passed to <c>cdk bootstrap --qualifier</c>.
 	/// </summary>

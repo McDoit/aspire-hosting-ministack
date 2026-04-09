@@ -1,6 +1,8 @@
+using Amazon;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.ECR;
+using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
@@ -8,6 +10,9 @@ using Amazon.SimpleSystemsManagement;
 using Aspire.Hosting.Testing;
 using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Runtime.ExceptionServices;
 
 namespace McDoit.Aspire.Hosting.Ministack.Tests.Fixture;
 
@@ -16,13 +21,16 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
     private DistributedApplication? _app;
 
     public IAmazonS3 S3Client { get; private set; } = null!;
-    public IAmazonECR EcrClient { get; private set; } = null!;
+	public IAmazonIdentityManagementService IamClient { get; private set; } = null!;
+	public IAmazonECR EcrClient { get; private set; } = null!;
     public IAmazonCloudFormation CloudFormationClient { get; private set; } = null!;
     public IAmazonSimpleSystemsManagement SsmClient { get; private set; } = null!;
 
     public IDistributedApplicationTestingBuilder Builder { get; private set; } = null!;
 
     public MinistackResource MinistackResource { get; private set; } = null!;
+
+    private ILogger _logger { get; set; } = null!;
 
 	public async Task InitializeAsync()
     {
@@ -31,17 +39,28 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
         using var startupCts = new CancellationTokenSource(startupTimeout);
 
 		Builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>([], configureBuilder: (dao, habs) =>
+            {
+                dao.DisableDashboard = true;
+                dao.TrustDeveloperCertificate = true;
+            }, 
+            startupCts.Token
+			);
         _app = await Builder.BuildAsync();
         await _app.StartAsync(startupCts.Token);
 
-        MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault(f => f != null)
+		MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault()
             ?? throw new System.InvalidOperationException("The sample CDK AppHost did not create a MinistackResource as expected.");
 
-        Environment.SetEnvironmentVariable("AWS_PROFILE", MinistackResource.ProfileName);
+		await _app.ResourceNotifications.WaitForResourceHealthyAsync(MinistackResource.Name, startupCts.Token);
 
-        S3Client = new AmazonS3Client(new AmazonS3Config
-        {
+		_logger = _app.Services.GetRequiredService<ResourceLoggerService>()
+										.GetLogger(MinistackResource);
+
+        AWSConfigs.AWSProfileName = MinistackResource.ProfileName;
+        
+		S3Client = new AmazonS3Client(new AmazonS3Config
+        {                
 			ForcePathStyle = true
         });
 
@@ -51,7 +70,9 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 
         SsmClient = new AmazonSimpleSystemsManagementClient();
 
-        await WaitForCdkBootstrapAsync(MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>().First(), startupCts.Token);
+        IamClient = new AmazonIdentityManagementServiceClient();
+
+		await WaitForCdkBootstrapAsync(MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>().First(), startupCts.Token);
     }
 
     private static TimeSpan GetBootstrapTimeout()
@@ -86,7 +107,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             try
             {
                 var response = await CloudFormationClient.DescribeStacksAsync(
-                    new DescribeStacksRequest { StackName = "CDKToolkit-" + annotation.Qualifier }, cancellationToken);
+                    new DescribeStacksRequest { StackName = string.IsNullOrWhiteSpace(annotation.Qualifier) ? "CDKToolkit" : "CDKToolkit-" + annotation.Qualifier }, cancellationToken);
 
                 var stack = response.Stacks.FirstOrDefault();
                 if (stack is not null)
@@ -101,6 +122,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             }
             catch (AmazonCloudFormationException exc)
             {
+                _logger.LogError(exc, "Error while checking CDK bootstrap stack status. Will retry until timeout.");
                 // Stack does not exist yet; keep polling.
             }
 

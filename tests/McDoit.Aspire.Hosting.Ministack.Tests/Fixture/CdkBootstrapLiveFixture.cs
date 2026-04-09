@@ -8,6 +8,9 @@ using Amazon.SimpleSystemsManagement;
 using Aspire.Hosting.Testing;
 using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Runtime.ExceptionServices;
 
 namespace McDoit.Aspire.Hosting.Ministack.Tests.Fixture;
 
@@ -24,6 +27,8 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
 
     public MinistackResource MinistackResource { get; private set; } = null!;
 
+    private ILogger _logger { get; set; } = null!;
+
 	public async Task InitializeAsync()
     {
         // Guard against the app or CDK bootstrap hanging indefinitely.
@@ -31,25 +36,47 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
         using var startupCts = new CancellationTokenSource(startupTimeout);
 
 		Builder = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>();
+            .CreateAsync<Projects.McDoit_Aspire_Hosting_Ministack_Sample_Cdk_AppHost>(Array.Empty<string>(), configureBuilder: (dao, habs) =>
+            {
+                dao.DisableDashboard = true;
+                dao.TrustDeveloperCertificate = true;
+            }, 
+            startupCts.Token
+			);
         _app = await Builder.BuildAsync();
         await _app.StartAsync(startupCts.Token);
 
-        MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault(f => f != null)
+		MinistackResource = Builder.Resources.OfType<MinistackResource>().FirstOrDefault(f => f != null)
             ?? throw new System.InvalidOperationException("The sample CDK AppHost did not create a MinistackResource as expected.");
 
-        Environment.SetEnvironmentVariable("AWS_PROFILE", MinistackResource.ProfileName);
+		_logger = _app.Services.GetRequiredService<ResourceLoggerService>()
+										.GetLogger(MinistackResource);
 
-        S3Client = new AmazonS3Client(new AmazonS3Config
+        var connectionString = await _app.GetConnectionStringAsync(MinistackResource.Name, startupCts.Token);
+
+		Environment.SetEnvironmentVariable("AWS_PROFILE", MinistackResource.ProfileName);
+		Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL", connectionString);
+
+		S3Client = new AmazonS3Client("test", "test", new AmazonS3Config
         {
+            ServiceURL = connectionString,
 			ForcePathStyle = true
         });
 
-        EcrClient = new AmazonECRClient();
+        EcrClient = new AmazonECRClient("test", "test", new AmazonECRConfig
+        {
+            ServiceURL = connectionString,
+        });
 
-        CloudFormationClient = new AmazonCloudFormationClient();
+        CloudFormationClient = new AmazonCloudFormationClient("test", "test", new AmazonCloudFormationConfig
+        {
+            ServiceURL = connectionString,
+		});
 
-        SsmClient = new AmazonSimpleSystemsManagementClient();
+        SsmClient = new AmazonSimpleSystemsManagementClient("test", "test", new AmazonSimpleSystemsManagementConfig
+        {
+            ServiceURL = connectionString,
+        });
 
         await WaitForCdkBootstrapAsync(MinistackResource.Annotations.OfType<CdkBootstrapAnnotation>().First(), startupCts.Token);
     }
@@ -101,6 +128,7 @@ public class CdkBootstrapLiveFixture : IAsyncLifetime
             }
             catch (AmazonCloudFormationException exc)
             {
+                _logger.LogError(exc, "Error while checking CDK bootstrap stack status. Will retry until timeout.");
                 // Stack does not exist yet; keep polling.
             }
 

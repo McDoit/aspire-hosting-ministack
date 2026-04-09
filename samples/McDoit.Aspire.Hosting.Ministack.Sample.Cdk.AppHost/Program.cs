@@ -11,7 +11,7 @@ var awsConfig = builder.AddAWSSDKConfig()
 
 var ministack = builder.AddMinistack(awsConfig)
     .WithCdkBootstrap("myapp")
-    .WithStackport();
+    .WithStackport(c => c.WithExplicitStart());
 
 builder.AddAWSCDKStack("MyStack", app =>
     {

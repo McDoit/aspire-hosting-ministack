@@ -9,6 +9,7 @@ using McDoit.Aspire.Hosting.Ministack.Helpers;
 using McDoit.Aspire.Hosting.Ministack.Resources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -180,10 +181,15 @@ public static class MinistackResourceBuilderExtensions
 		
 		builder.WithAnnotation(new CdkBootstrapAnnotation(qualifier));
 
+
 		builder.OnResourceReady(async (resource, _, cancellationToken) =>
 		{
+			var logger = builder.ApplicationBuilder.ExecutionContext.ServiceProvider.GetRequiredService<ResourceLoggerService>()
+									.GetLogger(builder.Resource);
+
 			try
 			{
+
 				var connectionString = await resource.ConnectionStringExpression.GetValueAsync(cancellationToken);
 
 				if (string.IsNullOrEmpty(connectionString))
@@ -220,6 +226,8 @@ public static class MinistackResourceBuilderExtensions
 					npxCommand += $" --qualifier \"{qualifier}\" --toolkit-stack-name \"CDKToolkit-{qualifier}\"";
 				}
 
+				logger.LogWarning("CDK bootstrap command: {Command}", npxCommand);
+
 				if (isWindows)
 				{
 					process.StartInfo.ArgumentList.Add("/d");
@@ -238,6 +246,10 @@ public static class MinistackResourceBuilderExtensions
 				process.StartInfo.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
 				process.StartInfo.EnvironmentVariables["AWS_DEFAULT_REGION"] = region;
 
+				var startInfoData = process.StartInfo.ToString();
+
+				logger.LogWarning("Starting CDK bootstrap with command: {Command}", startInfoData);				
+
 				process.OutputDataReceived += (c, e) =>
 				{
 					if (!string.IsNullOrWhiteSpace(e.Data))
@@ -253,6 +265,8 @@ public static class MinistackResourceBuilderExtensions
 				if (!process.Start())
 					throw new InvalidOperationException("Failed to start process.");
 
+				logger.LogWarning("Bootstraping started");
+
 				process.BeginOutputReadLine();
 				process.BeginErrorReadLine();
 
@@ -262,6 +276,9 @@ public static class MinistackResourceBuilderExtensions
 				try
 				{
 					await process.WaitForExitAsync(linkedCts.Token);
+					
+					logger.LogWarning("Bootstraping completed");
+
 				}
 				catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
 				{
@@ -277,6 +294,7 @@ public static class MinistackResourceBuilderExtensions
 			catch (Exception exc)
 			{
 				//TODO add bootstrap resource logging
+				logger.LogError(exc, "CDK bootstrap failed.");
 				throw;
 			}
 		});

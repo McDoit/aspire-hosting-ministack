@@ -8,7 +8,7 @@ internal static class MinistackContainerImageTags
 {
 	internal const string Registry = "docker.io";
 
-	internal const string Image = "nahuelnucera/ministack";
+	internal const string Image = "ministackorg/ministack";
 
 	internal const string Tag = "latest";
 }

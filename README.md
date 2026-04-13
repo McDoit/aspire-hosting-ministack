@@ -79,7 +79,7 @@ builder.AddMinistack(awsConfig)
 | Option | Environment variable | Default | Description |
 |--------|---------------------|---------|-------------|
 | `Registry` | — | `docker.io` | Container registry |
-| `Image` | — | `nahuelnucera/ministack` | Container image |
+| `Image` | — | `ministackorg/ministack` | Container image |
 | `Tag` | — | `latest` | Image tag |
 | `Port` | — | *(proxied)* | Host port; when set, proxying is disabled |
 | `Lifetime` | `PERSIST_STATE`, `S3_PERSIST` | `Session` | `Persistent` enables file-based state persistence |

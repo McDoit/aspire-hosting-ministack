@@ -28,7 +28,7 @@ public class MinistackHostingExtensionsTests
     public void ContainerImageTags_UseExpectedValues()
     {
         Assert.Equal("docker.io", MinistackContainerImageTags.Registry);
-        Assert.Equal("nahuelnucera/ministack", MinistackContainerImageTags.Image);
+        Assert.Equal("ministackorg/ministack", MinistackContainerImageTags.Image);
         Assert.Equal("latest", MinistackContainerImageTags.Tag);
     }
 

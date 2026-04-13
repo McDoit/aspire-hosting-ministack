@@ -22,5 +22,5 @@ This project contains the reusable Aspire hosting integration exposed through:
 ## Defaults
 
 - Registry: `docker.io`
-- Image: `nahuelnucera/ministack`
+- Image: `ministackorg/ministack`
 - Tag: `latest`

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.7](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.6...v0.0.7) (2026-04-13)
+
+
+### Features
+
+* Update Ministack image reference to ministackorg ([08394fa](https://github.com/McDoit/aspire-hosting-ministack/commit/08394fa4595a71dbca8c98d2b91e739d5636ea38))
+
+
+### Bug Fixes
+
+* Fixes for running tests ([#23](https://github.com/McDoit/aspire-hosting-ministack/issues/23)) ([522dee1](https://github.com/McDoit/aspire-hosting-ministack/commit/522dee1243a3d1a1b51d57bd919d2aee8774de6d))
+
 ## [0.0.6](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.5...v0.0.6) (2026-04-08)
 
 

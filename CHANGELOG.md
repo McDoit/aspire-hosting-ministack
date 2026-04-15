@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.0](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.7...v0.1.0) (2026-04-15)
+
+
+### Features
+
+* Added RDS as pesisted ([87391ec](https://github.com/McDoit/aspire-hosting-ministack/commit/87391eced6d4ff700d1828e31b5680121c39ad1b))
+* Added support for docker ([#26](https://github.com/McDoit/aspire-hosting-ministack/issues/26)) ([87391ec](https://github.com/McDoit/aspire-hosting-ministack/commit/87391eced6d4ff700d1828e31b5680121c39ad1b))
+
 ## [0.0.7](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.6...v0.0.7) (2026-04-13)
 
 

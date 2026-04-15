@@ -106,8 +106,13 @@ public static class MinistackResourceBuilderExtensions
 		{
 			ministackBuilder.WithEnvironment("PERSIST_STATE", "1");
 			ministackBuilder.WithEnvironment("S3_PERSIST", "1");
+			ministackBuilder.WithEnvironment("RDS_PERSIST", "1");
 		}
 
+		if (options.EnableDockerSupport)
+		{
+			ministackBuilder = ministackBuilder.WithBindMount("/var/run/docker.sock", "/var/run/docker.sock");
+		}
 
 		var profileInitDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 

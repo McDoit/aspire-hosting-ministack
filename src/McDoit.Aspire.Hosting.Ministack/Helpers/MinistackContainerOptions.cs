@@ -18,4 +18,5 @@ public class MinistackContainerOptions
 	public int? Port { get; set; }
 
 	public ContainerLifetime Lifetime { get; set; } = ContainerLifetime.Session;
+	public bool EnableDockerSupport { get; internal set; } = false;
 }

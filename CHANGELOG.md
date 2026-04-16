@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.1.0...v0.1.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* Moved is packable to package project ([#28](https://github.com/McDoit/aspire-hosting-ministack/issues/28)) ([6d30970](https://github.com/McDoit/aspire-hosting-ministack/commit/6d30970b810bffdcf7daea3c1ebad7badc3e93a0))
+
 ## [0.1.0](https://github.com/McDoit/aspire-hosting-ministack/compare/v0.0.7...v0.1.0) (2026-04-15)
 
 
